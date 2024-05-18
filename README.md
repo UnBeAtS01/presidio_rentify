@@ -1,3 +1,9 @@
+
+deployment link: https://presidio-rentify-git-main-unbeat01s-projects.vercel.app/signin
+
+run "npm install" in terminal after opening this file in terminal.
+then run "npm start" to start a server to see the file.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -68,3 +74,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+
+

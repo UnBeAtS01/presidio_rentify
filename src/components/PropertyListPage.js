@@ -1,6 +1,5 @@
-// PropertyList.js
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, where, query, onSnapshot,doc,updateDoc, increment ,getDoc } from 'firebase/firestore';
+import { collection, getDocs, where, query, onSnapshot, doc, updateDoc, increment, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseconfig'; // Firebase firestore instance
 import './PropertyList.css';
 
@@ -9,6 +8,9 @@ const PropertyList = () => {
   const [authInitialized, setAuthInitialized] = useState(false);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [filters, setFilters] = useState({ area: '', place: '', bedrooms: '' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const propertiesPerPage = 10;
+
   useEffect(() => {
     const unsubscribeAuthListener = auth.onAuthStateChanged(user => {
       // Check if user is authenticated
@@ -21,41 +23,42 @@ const PropertyList = () => {
 
     return () => unsubscribeAuthListener();
   }, []);
+
   useEffect(() => {
     if (authInitialized) {
-    if (!auth.currentUser){ console.log("null");return;}
-    const fetchProperties = async () => {
-        try{
-            const q = query(collection(db, 'properties'), where('userId', '!=', auth.currentUser.uid));
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-              const propertyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              setProperties(propertyData);
-              setFilteredProperties(propertyData)
-            });
-            return () => unsubscribe();
+      if (!auth.currentUser) {
+        console.log("null");
+        return;
+      }
+      const fetchProperties = async () => {
+        try {
+          const q = query(collection(db, 'properties'), where('userId', '!=', auth.currentUser.uid));
+          const unsubscribe = onSnapshot(q, (snapshot) => {
+            const propertyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setProperties(propertyData);
+            setFilteredProperties(propertyData);
+          });
+          return () => unsubscribe();
+        } catch (err) {
+          console.log("error while fetching data");
         }
-        catch(err){
-            console.log("error while fetching data")
-        }
-      
-      
-    };
+      };
 
-    fetchProperties();
-}
+      fetchProperties();
+    }
   }, [authInitialized]);
 
   const handleLike = async (propertyId) => {
     try {
       const propertyRef = doc(db, 'properties', propertyId);
-  
+
       // Get the current property document data
       const propertySnapshot = await getDoc(propertyRef);
       const propertyData = propertySnapshot.data();
-  
+
       // Get the list of liked users from the property document
       const likedUsers = propertyData.likedUsers || [];
-  
+
       // Check if the current user's ID is already in the list of liked users
       if (!likedUsers.includes(auth.currentUser.uid)) {
         // If not, update the property document to add the current user's ID to the list and increment the like count
@@ -68,33 +71,59 @@ const PropertyList = () => {
       console.error('Error updating like count:', error);
     }
   };
-  
 
   const handleInterest = (propertyId) => {
-
     console.log(`Interested in property with ID: ${propertyId}`);
   };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name]: value });
   };
+
   const applyFilters = () => {
     let filtered = properties;
     if (filters.area) {
       filtered = filtered.filter(property => property.area.includes(filters.area));
     }
     if (filters.place) {
-      filtered = filtered.filter(property =>property.place.includes(filters.place));
+      filtered = filtered.filter(property => property.place.includes(filters.place));
     }
     if (filters.bedrooms) {
       filtered = filtered.filter(property => property.bedrooms === filters.bedrooms);
     }
     setFilteredProperties(filtered);
+    setCurrentPage(1); // Reset to the first page whenever filters are applied
   };
+
   const clearFilters = () => {
     setFilters({ area: '', place: '', bedrooms: '' });
     setFilteredProperties(properties); // Reset filteredProperties to all properties
+    setCurrentPage(1); // Reset to the first page
   };
+
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = filteredProperties.slice(indexOfFirstProperty, indexOfLastProperty);
+
+  const totalPages = Math.ceil(filteredProperties.length / propertiesPerPage);
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={i === currentPage ? 'active' : ''}
+        >
+          {i}
+        </button>
+      );
+    }
+    return pageNumbers;
+  };
+
   return (
     <div className="property-list">
       <h2>Property for Rent</h2>
@@ -105,7 +134,7 @@ const PropertyList = () => {
         <button onClick={applyFilters}>Apply Filter</button>
         <button onClick={clearFilters}>Clear Filter</button>
       </div>
-      {filteredProperties.map(property => (
+      {currentProperties.map(property => (
         <div className="property-card" key={property.id}>
           <h3>{property.title}</h3>
           <p>Area: {property.area}</p>
@@ -118,6 +147,9 @@ const PropertyList = () => {
           </div>
         </div>
       ))}
+      <div className="pagination">
+        {renderPageNumbers()}
+      </div>
     </div>
   );
 };
