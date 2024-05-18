@@ -1,4 +1,3 @@
-// MyProperties.js
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseconfig';
@@ -12,6 +11,8 @@ const MyProperties = () => {
   const [editedArea, setEditedArea] = useState('');
   const [editedPlace, setEditedPlace] = useState('');
   const [editedPhoneNumber, setEditedPhoneNumber] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const propertiesPerPage = 10;
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -41,6 +42,10 @@ const MyProperties = () => {
   };
 
   const handleEditSubmit = async () => {
+    if (!editedTitle || !editedArea || !editedPlace || !editedPhoneNumber) {
+      alert('All fields are required.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'properties', editingProperty.id), {
         title: editedTitle,
@@ -73,10 +78,33 @@ const MyProperties = () => {
     }
   };
 
+  // Pagination logic
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+
+  const totalPages = Math.ceil(properties.length / propertiesPerPage);
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={i === currentPage ? 'active' : ''}
+        >
+          {i}
+        </button>
+      );
+    }
+    return pageNumbers;
+  };
+
   return (
     <div className="my-properties">
       <h2>Your Property for Rent</h2>
-      {properties.map(property => (
+      {currentProperties.map(property => (
         <div className="property-card" key={property.id}>
           <h3>{property.title}</h3>
           <p>Area: {property.area}</p>
@@ -90,16 +118,47 @@ const MyProperties = () => {
         </div>
       ))}
       {modalOpen && (
-        <div className="modal">
-          <h2>Edit Property</h2>
-          <input type="text" value={editedTitle} onChange={e => setEditedTitle(e.target.value)} />
-          <input type="text" value={editedArea} onChange={e => setEditedArea(e.target.value)} />
-          <input type="text" value={editedPlace} onChange={e => setEditedPlace(e.target.value)} />
-          <input type="text" value={editedPhoneNumber} onChange={e => setEditedPhoneNumber(e.target.value)} />
-          <button onClick={handleEditSubmit}>Submit</button>
-          <button onClick={handleCloseModal}>Cancel</button>
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Edit Property</h2>
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={e => setEditedTitle(e.target.value)}
+              placeholder="Title"
+              required
+            />
+            <input
+              type="text"
+              value={editedArea}
+              onChange={e => setEditedArea(e.target.value)}
+              placeholder="Area"
+              required
+            />
+            <input
+              type="text"
+              value={editedPlace}
+              onChange={e => setEditedPlace(e.target.value)}
+              placeholder="Place"
+              required
+            />
+            <input
+              type="text"
+              value={editedPhoneNumber}
+              onChange={e => setEditedPhoneNumber(e.target.value)}
+              placeholder="Phone Number"
+              required
+            />
+            <div className="modal-buttons">
+              <button onClick={handleEditSubmit}>Submit</button>
+              <button onClick={handleCloseModal}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
+      <div className="pagination">
+        {renderPageNumbers()}
+      </div>
     </div>
   );
 };
