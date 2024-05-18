@@ -1,13 +1,13 @@
 .navbar{
     width:100%;
-    background-color: aqua;
+    background-color: black;
     height: 10vh;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 .user-info{
-    background-color: blue;
+    
     width: 60%;
     height: 100%;
     align-items: center;
@@ -21,12 +21,12 @@
     height: 100%;
     margin-left: 10%;
     font-size: larger;
+    color:white;
 }
 .navbar-buttons{
     display: flex;
     height: 100%;
     width: 30%;
-    background-color: beige;
     align-items: center;
     justify-content: space-evenly;
 }

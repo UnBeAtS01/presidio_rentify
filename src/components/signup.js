@@ -13,9 +13,12 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(null);
   const navigate=useNavigate()
   const handleSignup = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -32,7 +35,10 @@ const Signup = () => {
     
     } catch (error) {
       console.error("error occured",error.message);
-    }
+      setError(error)
+    }finally {
+        setLoading(false); 
+      }
   };
 
   return (
@@ -44,9 +50,10 @@ const Signup = () => {
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone Number" required />
-        <button type="submit">Sign Up</button>
+        <button type="submit" disabled={loading} style={{marginBottom:"10px"}}>{loading?"Loading...":"Sign Up"}</button>
         <button onClick={()=>navigate("/signin")}>Sign In</button>
       </form>
+      {error && <div className="error-message">{error.message}</div>}
     </div>
   );
 };

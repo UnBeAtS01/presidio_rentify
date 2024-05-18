@@ -7,6 +7,8 @@ import './PropertyList.css';
 const PropertyList = () => {
   const [properties, setProperties] = useState([]);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [filters, setFilters] = useState({ area: '', place: '', bedrooms: '' });
   useEffect(() => {
     const unsubscribeAuthListener = auth.onAuthStateChanged(user => {
       // Check if user is authenticated
@@ -28,6 +30,7 @@ const PropertyList = () => {
             const unsubscribe = onSnapshot(q, (snapshot) => {
               const propertyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
               setProperties(propertyData);
+              setFilteredProperties(propertyData)
             });
             return () => unsubscribe();
         }
@@ -71,11 +74,38 @@ const PropertyList = () => {
 
     console.log(`Interested in property with ID: ${propertyId}`);
   };
-
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters({ ...filters, [name]: value });
+  };
+  const applyFilters = () => {
+    let filtered = properties;
+    if (filters.area) {
+      filtered = filtered.filter(property => property.area.includes(filters.area));
+    }
+    if (filters.place) {
+      filtered = filtered.filter(property =>property.place.includes(filters.place));
+    }
+    if (filters.bedrooms) {
+      filtered = filtered.filter(property => property.bedrooms === filters.bedrooms);
+    }
+    setFilteredProperties(filtered);
+  };
+  const clearFilters = () => {
+    setFilters({ area: '', place: '', bedrooms: '' });
+    setFilteredProperties(properties); // Reset filteredProperties to all properties
+  };
   return (
     <div className="property-list">
-      <h2>Property List</h2>
-      {properties.map(property => (
+      <h2>Property for Rent</h2>
+      <div className="filter-container">
+        <input type="text" name="area" value={filters.area} onChange={handleFilterChange} placeholder="Area" />
+        <input type="text" name="place" value={filters.place} onChange={handleFilterChange} placeholder="Place" />
+        <input type="number" name="bedrooms" value={filters.bedrooms} onChange={handleFilterChange} placeholder="Bedrooms" />
+        <button onClick={applyFilters}>Apply Filter</button>
+        <button onClick={clearFilters}>Clear Filter</button>
+      </div>
+      {filteredProperties.map(property => (
         <div className="property-card" key={property.id}>
           <h3>{property.title}</h3>
           <p>Area: {property.area}</p>

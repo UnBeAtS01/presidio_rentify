@@ -11,10 +11,14 @@ const CreatePropertyModal = ({ onClose }) => {
   const [bedrooms, setBedrooms] = useState('');
   const [place,setPlace]=useState('');
   const [nearbyLocations,setNearbyLocations]=useState('')
-  
-  let userId=auth.currentUser.uid;
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!title || !area || !bedrooms || !place || !nearbyLocations) {
+        setError('All fields are required.');
+        return;
+      }
     try {
         let likes=0;
       await addDoc(collection(db, 'properties'), {
@@ -23,11 +27,12 @@ const CreatePropertyModal = ({ onClose }) => {
         bedrooms,
         nearbyLocations,
         place,
-        userId,
+        userId:auth.currentUser.uid,
         likes,
       });
       onClose();
     } catch (error) {
+        setError(error.message)
       console.error(error.message);
     }
   };
@@ -36,6 +41,7 @@ const CreatePropertyModal = ({ onClose }) => {
     <div className="modal-overlay">
       <div className="create-property-modal">
         <h2>Create New Property</h2>
+        {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" required />
           <input type="text" value={area} onChange={(e) => setArea(e.target.value)} placeholder="Area" required />

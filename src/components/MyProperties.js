@@ -75,7 +75,7 @@ const MyProperties = () => {
 
   return (
     <div className="my-properties">
-      <h2>My Properties</h2>
+      <h2>Your Property for Rent</h2>
       {properties.map(property => (
         <div className="property-card" key={property.id}>
           <h3>{property.title}</h3>
